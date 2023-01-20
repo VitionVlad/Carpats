@@ -8,8 +8,6 @@
 
 #include "res.hpp"
 
-#include <AL/alut.h>
-
 Engine eng;
 
 float cspeed = 0.05;
@@ -35,12 +33,6 @@ bool nearstation = false;
 vec3 lPos = vec3(0, -5, 0);
 
 bool menu = true;
-
-ALuint srcs1;
-
-ALuint srcs2;
-
-ALuint srcs3;
 
 int passescnt = 0;
 
@@ -86,7 +78,6 @@ void movecallback(){
     state = glfwGetKey(eng.window, GLFW_KEY_E);
     if (state == GLFW_PRESS){ //d
         if(nearcar == true){
-            alSourcePlay(srcs2);
             switch(incar){
                 case false:
                 incar = true;
@@ -122,12 +113,9 @@ void movecallback(){
         switch(enginerun){
             case false:
             enginerun = true;
-            alSourcePlay(srcs1);
             break;
             case true:
             enginerun = false;
-            alSourceStop(srcs1);
-            alSourcePlay(srcs3);
             break;
         }
         sleep_for(milliseconds(200));
@@ -934,7 +922,6 @@ bool fllscreen = false;
 
 int main(int argc, char **argv){
     eng.Init();
-    alutInit(&argc, argv);
     glfwSetWindowTitle(eng.window, "Carpats");
     eng.shadowProj.buildperspectivemat(110, 0.1, 100, 1, 0);
     //eng.shadowProj.buildorthomat(1, -1, 1, -1, 0.1, 100f);
@@ -1103,17 +1090,6 @@ int main(int argc, char **argv){
     eng.copyucharArray(icon_texture().pixels, icon.pixels);
     glfwSetWindowIcon(eng.window, 1, &icon);
 
-    ALuint engst = alutCreateBufferFromFile("data/audio/start.wav");
-    ALuint doorst = alutCreateBufferFromFile("data/audio/door.wav");
-    ALuint inwayst = alutCreateBufferFromFile("data/audio/inway.wav");
-
-    alGenSources(1, &srcs1);
-    alGenSources(1, &srcs2);
-    alGenSources(1, &srcs3);
-    alSourcei(srcs1, AL_BUFFER, engst);
-    alSourcei(srcs2, AL_BUFFER, doorst);
-    alSourcei(srcs3, AL_BUFFER, inwayst);
-
     double lastTime = glfwGetTime();
     int nbFrames = 0;
     string tittle;
@@ -1188,7 +1164,6 @@ int main(int argc, char **argv){
 
         if(quitzone.update(eng.resolution, mousepos, mouseclicked) == true && menu == true){
             glfwSetWindowMonitor(eng.window, NULL, 0, 0, eng.resolution.x, eng.resolution.y, 60);
-            alutExit();
             return 1;
         }
 
@@ -1215,7 +1190,6 @@ int main(int argc, char **argv){
             nbFrames = 0;
             lastTime += 1.0;
             if(enginerun == true && fuel > 0){
-                alSourcePlay(srcs3);
                 fuel--;
                 if(speedlimit == 1 && transmission > 4){
                     cash -= 5;
@@ -1224,16 +1198,20 @@ int main(int argc, char **argv){
                     cash -= 5;
                 }
             }else{
-                alSourceStop(srcs3);
             }
         }
-        if(cash == 0 || fuel == 0){
+        if(cash <= 0 || fuel == 0){
             cash = 50;
             fuel = 120;
             lPos.z = 0;
             eng.camsize.y = 2.5;
             eng.pos = vec3(1.92, -1.95, 1.7);
             eng.rot = vec2(2.4, 0.019);
+            carcas.meshPosition.z = zpos;
+            saloon.meshPosition.z = zpos;
+            stwheel.meshPosition.z = zpos;
+            wheels[0].meshPosition.z = zpos - 1.8;
+            wheels[1].meshPosition.z = zpos + 2.4;
             incar = false;
             enablegas = false;
             grass = false;
@@ -1243,6 +1221,5 @@ int main(int argc, char **argv){
             passescnt = 0;
         }
     }
-    alutExit();
     return 1;
 }
